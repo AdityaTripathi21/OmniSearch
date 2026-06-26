@@ -9,50 +9,11 @@ EMBEDDING_MODEL = "gemini-embedding-2"
 EMBEDDING_DIMENSIONS = 768
 
 SUPPORTED_EXTENSIONS = {
-    "image": {
-        ".png",
-        ".jpg",
-        ".jpeg",
-        ".webp",
-        ".gif",
-        ".bmp",
-        ".tiff",
-    },
-    "audio": {
-        ".mp3",
-        ".wav",
-        ".m4a",
-        ".ogg",
-        ".flac",
-        ".aac",
-    },
-    "video": {
-        ".mp4",
-        ".mov",
-        ".avi",
-        ".mkv",
-        ".webm",
-    },
-    "document": {
-        ".pdf",
-    },
-    "text": {
-        ".txt",
-        ".md",
-        ".csv",
-        ".json",
-        ".yaml",
-        ".yml",
-        ".toml",
-        ".xml",
-        ".html",
-        ".py",
-        ".js",
-        ".ts",
-        ".go",
-        ".rs",
-        ".sh",
-    },
+    "image": {".png", ".jpg", ".jpeg"},
+    "audio": {".mp3", ".wav"},
+    "video": {".mp4", ".mov"},
+    "document": {".pdf"},
+    "text": {".txt", ".md", ".csv", ".json", ".yaml", ".yml", ".toml", ".xml", ".html", ".py", ".js", ".ts", ".go", ".rs", ".sh"},
 }
 
 ALL_EXTENSIONS = set()
