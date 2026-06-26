@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
+from db import collection
+
 load_dotenv() 
 
 MODEL = "gemini-embedding-2"
@@ -49,21 +51,8 @@ def embed_query(query: str) -> list[float]:
     
     return res.embeddings[0].values # type: ignore
 
-def cosine(a: list[float], b: list[float]) -> float:
-    dot = sum(x * y for x, y in zip(a, b))
-    mag_a = math.sqrt(sum(x * x for x in a))
-    mag_b = math.sqrt(sum(y * y for y in b))
-    return dot / (mag_a * mag_b)
 
-def save_index(index: list[dict], path: str) -> None:
-    with open(path, "w") as f:
-        json.dump(index, f)
-
-def load_index(path: str) -> list[dict]:
-    with open(path, "r") as f:
-        return json.load(f)
-
-
+# get images from a folder, embed them, and update/insert into chromaDB
 def index_images(folder: str):
     folder_path = Path(folder)
     
@@ -73,38 +62,34 @@ def index_images(folder: str):
         *folder_path.glob("*.png"),
     ]
     
-    index = []
-
     for path in image_paths:
         embedding = embed_image(str(path))
 
-        record = {
-            "path": str(path),
-            "type": "image",
-            "embedding": embedding,
-        }
+        # id and metadata share values
+        collection.upsert(
+            ids=[f"image:{path.resolve()}"],
+            embeddings=[embedding],
+            metadatas=[
+                {
+                    "path": str(path.resolve()),
+                    "type": "image",
+                }
+            ],
+            documents=[path.name],
+        )
         
-        index.append(record)
-        
-    return index
+    
+    
 
-def search_index(index, query, top_k):
+def search_index(query, top_k):
     query_vec = embed_query(query)
     
-    res = []
-    
-    for record in index:
-        score = cosine(query_vec, record["embedding"])
-        
-        res.append({
-            "path": record["path"],
-            "score": score,
-        })
-        
-    res.sort(key=lambda item: item["score"], reverse=True)
-    
-    
-    return res[:top_k]
+    results = collection.query(
+        query_embeddings=[query_vec],
+        n_results=top_k,
+    )
+
+    return results
 
 
     
