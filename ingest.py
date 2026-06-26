@@ -26,8 +26,15 @@ def ingest_file(path: str | Path, source: str = "manual", description: str = "")
             "id": doc_id,
             "path": str(path),
         }
-        
-    if category == "image":
+    if category == "text":
+        text = path.read_text(errors="replace") # replace characters if unable to identify
+
+        if len(text) > 32000:
+            text = text[:32000]
+
+        embedding = embeddings.embed_text(text)
+        document = text[:500]
+    elif category == "image":
         embedding = embeddings.embed_image(path)
         document = description or f"Image: {path.name}"
     elif category == "document":

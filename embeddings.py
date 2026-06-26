@@ -30,7 +30,7 @@ def embed_query(query: str) -> list[float]:
 
 def embed_image(path: str | Path) -> list[float]:
     image_path = Path(path)
-    mime_type = utils.mime_type(path)
+    mime_type = utils.mime_type(image_path)
     
     # read entire file as raw bytes
     image_bytes = image_path.read_bytes() # type: ignore
@@ -56,7 +56,7 @@ def embed_pdf(path: str | Path) -> list[float]:
     pdf_bytes = pdf_path.read_bytes()
 
     res = client.models.embed_content(
-        model=config.EMBEDDING_MODEL,
+        model=MODEL,
         contents=[
             types.Part.from_bytes(
                 data=pdf_bytes,
@@ -76,7 +76,7 @@ def embed_audio(path: str | Path) -> list[float]:
     audio_bytes = audio_path.read_bytes()
 
     res = client.models.embed_content(
-        model=config.EMBEDDING_MODEL,
+        model=MODEL,
         contents=[
             types.Part.from_bytes(
                 data=audio_bytes,
@@ -97,7 +97,7 @@ def embed_video(path: str | Path) -> list[float]:
     video_bytes = video_path.read_bytes()
 
     res = client.models.embed_content(
-        model=config.EMBEDDING_MODEL,
+        model=MODEL,
         contents=[
             types.Part.from_bytes(
                 data=video_bytes,
@@ -113,7 +113,7 @@ def embed_video(path: str | Path) -> list[float]:
 
 def embed_text(text: str) -> list[float]:
     res = client.models.embed_content(
-        model=config.EMBEDDING_MODEL,
+        model=MODEL,
         contents=f"title: text document | text: {text}",
         config=types.EmbedContentConfig(
             output_dimensionality=config.EMBEDDING_DIMENSIONS,
