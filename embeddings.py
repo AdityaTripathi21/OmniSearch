@@ -6,8 +6,6 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-from db import collection
-
 load_dotenv() 
 
 MODEL = "gemini-embedding-2"
@@ -17,7 +15,7 @@ client = genai.Client(
         api_key=os.getenv("GEMINI_API_KEY")
 )
 
-def embed_image(path: str) -> list[float]:
+def embed_image(path: str | Path) -> list[float]:
     image_path = Path(path)
     mime_type, _ = mimetypes.guess_type(image_path)
     
@@ -41,7 +39,7 @@ def embed_image(path: str) -> list[float]:
     return res.embeddings[0].values # type: ignore
 
 
-def embed_query(query: str) -> list[float]:
+def embed_query(query: str | Path) -> list[float]:
     res = client.models.embed_content(
         model=MODEL,
         contents=f"task: search result | query: {query}",   # contents -> actual input
@@ -50,44 +48,11 @@ def embed_query(query: str) -> list[float]:
     return res.embeddings[0].values # type: ignore
 
 
-# get images from a folder, embed them, and update/insert into chromaDB
-def index_images(folder: str):
-    folder_path = Path(folder)
-    
-    image_paths = [
-        *folder_path.glob("*.jpg"),
-        *folder_path.glob("*.jpeg"),
-        *folder_path.glob("*.png"),
-    ]
-    
-    for path in image_paths:
-        embedding = embed_image(str(path))
+def embed_pdf(path: str | Path) -> list[float]:
+    return []
 
-        # id and metadata share values
-        collection.upsert(
-            ids=[f"image:{path.resolve()}"],
-            embeddings=[embedding],
-            metadatas=[
-                {
-                    "path": str(path.resolve()),
-                    "type": "image",
-                }
-            ],
-            documents=[path.name],
-        )
-        
+def embed_audio(path: str | Path) -> list[float]:
+    return []
 
-def search_index(query, top_k):
-    query_vec = embed_query(query)
-    
-    results = collection.query(
-        query_embeddings=[query_vec],
-        n_results=top_k,
-    )
-
-    return results
-
-
-    
-
-    
+def embed_video(path: str | Path) -> list[float]:
+    return []
