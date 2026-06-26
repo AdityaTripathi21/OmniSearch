@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
-import mimetypes
+
+import config
+import utils
 
 from dotenv import load_dotenv
 from google import genai
@@ -8,8 +10,7 @@ from google.genai import types
 
 load_dotenv() 
 
-MODEL = "gemini-embedding-2"
-
+MODEL = config.EMBEDDING_MODEL
 
 client = genai.Client(
         api_key=os.getenv("GEMINI_API_KEY")
@@ -17,10 +18,7 @@ client = genai.Client(
 
 def embed_image(path: str | Path) -> list[float]:
     image_path = Path(path)
-    mime_type, _ = mimetypes.guess_type(image_path)
-    
-    if mime_type is None:
-        raise ValueError(f"Could not detect MIME type for {path}")
+    mime_type = utils.mime_type(path)
     
     # read entire file as raw bytes
     image_bytes = image_path.read_bytes() # type: ignore
@@ -34,19 +32,27 @@ def embed_image(path: str | Path) -> list[float]:
                 mime_type=mime_type,
             )
         ],
+        config=types.EmbedContentConfig(
+            output_dimensionality=config.EMBEDDING_DIMENSIONS,
+        ),
     )
     
     return res.embeddings[0].values # type: ignore
 
 
-def embed_query(query: str | Path) -> list[float]:
+def embed_query(query: str) -> list[float]:
     res = client.models.embed_content(
         model=MODEL,
         contents=f"task: search result | query: {query}",   # contents -> actual input
+        config=types.EmbedContentConfig(
+            output_dimensionality=config.EMBEDDING_DIMENSIONS,
+        ),
     )
     
     return res.embeddings[0].values # type: ignore
 
+def embed_text(path: str) -> list[float]:
+    return []
 
 def embed_pdf(path: str | Path) -> list[float]:
     return []
