@@ -1,8 +1,11 @@
+import os
+from fnmatch import fnmatchcase
 from pathlib import Path
 
 import store
 import embeddings
 import utils
+import config
 
 
 # embed a file and store it in chromaDB, return a dict of status
@@ -75,13 +78,33 @@ def ingest_directory(path: str | Path, source: str = "manual",
                      recursive: bool = True) -> list[dict]:
     path = Path(path).resolve()
 
-    pattern = "**/*" if recursive else "*"
+    files = []
 
-    files = [
-        file_path
-        for file_path in sorted(path.glob(pattern))
-        if file_path.is_file() and utils.is_supported(file_path)
-    ]
+    # dirnames is immediate child directories
+    for directory, dirnames, filenames in os.walk(path, topdown=True):
+        dirnames[:] = sorted(
+            name for name in dirnames
+            if name not in config.EXCLUDED_DIR_NAMES
+        )
+
+        for filename in sorted(filenames):
+            if filename in config.EXCLUDED_FILE_NAMES:
+                continue
+
+            if any(
+                fnmatchcase(filename, pattern)
+                for pattern in config.EXCLUDED_FILE_PATTERNS
+            ):
+                continue
+
+            file_path = Path(directory) / filename
+            if utils.is_supported(file_path):
+                files.append(file_path)
+
+        if not recursive:
+            dirnames.clear()
+
+    files.sort()
 
     results = []
 
@@ -107,5 +130,4 @@ def ingest_directory(path: str | Path, source: str = "manual",
 
 
     
-
 
