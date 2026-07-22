@@ -48,12 +48,4 @@ ALL_EXTENSIONS = set()
 
 for extensions in SUPPORTED_EXTENSIONS.values():
     ALL_EXTENSIONS.update(extensions)
-    
-def get_media_category(extension: str) -> str | None:
-    extension = extension.lower()
 
-    for category, extensions in SUPPORTED_EXTENSIONS.items():
-        if extension in extensions:
-            return category
-
-    return None
