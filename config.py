@@ -31,6 +31,9 @@ EXCLUDED_FILE_PATTERNS = {
     "*.log",
     "*.tmp",
     "*.pyc",
+     "*.yaml",
+    "*.yml",
+    "*.sh",
 }
 
 EMBEDDING_MODEL = "gemini-embedding-2"
