@@ -1,7 +1,10 @@
 from pathlib import Path
 
-DATA_DIR = Path("data")
+PROJECT_DIR = Path(__file__).resolve().parent
+DATA_DIR = PROJECT_DIR / "data"
+
 CHROMA_DIR = DATA_DIR / "chroma"
+CATALOG_PATH = DATA_DIR / "catalog.sqlite3"
 
 COLLECTION_NAME = "laptop_search"
 
@@ -15,11 +18,21 @@ EXCLUDED_DIR_NAMES = {
     ".git",
     "node_modules",
     ".venv",
+    "venv",
+    "env",
     "__pycache__",
     "dist",
     "build",
     ".next",
     ".cache",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".vscode",
+    ".idea",
+    "coverage",
+    "target",
+    "vendor",
 }
 
 EXCLUDED_FILE_NAMES = {
@@ -31,9 +44,15 @@ EXCLUDED_FILE_PATTERNS = {
     "*.log",
     "*.tmp",
     "*.pyc",
-     "*.yaml",
+    "*.yaml",
     "*.yml",
     "*.sh",
+    "*.pem",
+    "*.key",
+    "*.p12",
+    "*.pfx",
+    "*credentials*.csv",
+    "*accessKeys*.csv",
 }
 
 EMBEDDING_MODEL = "gemini-embedding-2"
