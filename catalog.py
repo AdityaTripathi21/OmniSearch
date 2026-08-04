@@ -154,8 +154,8 @@ def update_discovered_file(path: str | Path) -> None:
     finally:
         connection.close()
 
-def get_files_needing_hash(limit: int = 100) -> list[sqlite3.Row]:
-    """Return catalog files whose current contents have not been hashed."""
+def get_files_needing_hash(limit: int = 100, after_path: str = "") -> list[sqlite3.Row]:
+    """Return a page of unhashed files after the given path."""
     
     if limit < 1:
             raise ValueError("limit must be at least 1")
@@ -167,10 +167,14 @@ def get_files_needing_hash(limit: int = 100) -> list[sqlite3.Row]:
             SELECT *
             FROM files
             WHERE content_hash IS NULL
+              AND file_path > ?
             ORDER BY file_path
             LIMIT ?
             """,
-            (limit,),
+            (
+                after_path,
+                limit,
+            ),
         ).fetchall()
 
         return rows
@@ -206,33 +210,6 @@ def set_content_hash(path: str | Path, content_hash: str) -> None:
                 )
     finally:
         connection.close()    
-
-def hash_pending_files(limit: int = 100) -> list[dict]:
-    """Hash a batch of catalog files whose content hash is missing."""
-    
-    rows = get_files_needing_hash(limit=limit)
-    results: list[dict] = []
-    
-    for row in rows:
-        path = Path(row["file_path"])
-
-        try:
-            content_hash = utils.file_hash(path)
-            set_content_hash(path, content_hash)
-
-            results.append({
-                "status": "hashed",
-                "path": str(path),
-                "content_hash": content_hash,
-            })
-        except Exception as error:
-            results.append({
-                "status": "error",
-                "path": str(path),
-                "error": str(error),
-            })
-
-    return results
 
 
     
