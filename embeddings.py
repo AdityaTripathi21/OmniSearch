@@ -121,3 +121,40 @@ def embed_text(text: str) -> list[float]:
     )
 
     return res.embeddings[0].values  # type: ignore
+
+def embed_text_batch(texts: list[str]) -> list[list[float]]:
+    """Embed multiple texts in one request while preserving input order."""
+
+    if not texts:
+        return []
+
+    contents = [
+        types.Content(
+            parts=[
+                types.Part.from_text(
+                    text=f"title: text document | text: {text}"
+                )
+            ]
+        )
+        for text in texts
+    ]
+
+    res = client.models.embed_content(
+        model=MODEL,
+        contents=contents,
+        config=types.EmbedContentConfig(
+            output_dimensionality=config.EMBEDDING_DIMENSIONS,
+        ),
+    )
+
+    embeddings = [
+        embedding.values
+        for embedding in res.embeddings # type: ignore
+    ]
+
+    if len(embeddings) != len(texts):
+        raise RuntimeError(
+            "Embedding response count does not match input count"
+        )
+
+    return embeddings  # type: ignore

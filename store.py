@@ -19,6 +19,38 @@ def add(doc_id: str, embedding: list[float], metadata: dict, document: str = "")
         metadatas=[metadata],
         documents=[document],
     )
+     
+     
+def add_many(
+    ids: list[str],
+    embeddings: list[list[float]],
+    metadatas: list[dict],
+    documents: list[str],
+) -> None:
+    """Add or update multiple Chroma records."""
+
+    lengths = {
+        len(ids),
+        len(embeddings),
+        len(metadatas),
+        len(documents),
+    }
+
+    if len(lengths) != 1:
+        raise ValueError(
+            "ids, embeddings, metadatas, and documents "
+            "must have equal lengths"
+        )
+
+    if not ids:
+        return
+
+    collection.upsert(
+        ids=ids,
+        embeddings=embeddings, # type: ignore
+        metadatas=metadatas, # type: ignore
+        documents=documents,
+    )
 
 
 # search for top k results, where specifices metadata filters like image or pdf     
