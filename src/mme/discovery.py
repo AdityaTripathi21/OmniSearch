@@ -2,8 +2,7 @@ from fnmatch import fnmatchcase
 import os
 from pathlib import Path
 
-import src.mme.config as config
-import src.mme.utils as utils
+from . import config, utils
 
 
 def discover_files(paths: list[str | Path], 
@@ -89,4 +88,4 @@ def discover_files(paths: list[str | Path],
             f"The following paths were not found:\n{formatted_paths}"
         )
     
-    return sorted(res)    
+    return sorted(res)

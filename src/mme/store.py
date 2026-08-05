@@ -1,6 +1,7 @@
 import chromadb
-import src.mme.config as config
 from pathlib import Path
+
+from . import config
 
 config.CHROMA_DIR.mkdir(parents=True, exist_ok=True)
 client = chromadb.PersistentClient(path=str(config.CHROMA_DIR))

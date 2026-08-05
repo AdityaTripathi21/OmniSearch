@@ -2,10 +2,8 @@ import os
 from fnmatch import fnmatchcase
 from pathlib import Path
 
-import src.mme.store as store
-import src.mme.embeddings as embeddings
-import src.mme.utils as utils
-from src.mme.discovery import discover_files     
+from mme import embeddings, store, utils
+from mme.discovery import discover_files
             
 
 def ingest_file(path: str | Path, source: str = "manual", description: str = "") -> dict:
@@ -145,4 +143,3 @@ def ingest_paths(
             })
 
     return results
-

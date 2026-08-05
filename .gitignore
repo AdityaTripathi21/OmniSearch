@@ -3,4 +3,7 @@ __pycache__/
 *.py[cod]
 data/
 venv/
-
+.venv/
+*.egg-info/
+build/
+dist/

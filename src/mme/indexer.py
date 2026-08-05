@@ -2,11 +2,8 @@ import hashlib
 import sqlite3
 from pathlib import Path
 
-import src.mme.catalog as catalog
-import src.mme.embeddings as embeddings
-import src.mme.store as store
-import src.mme.utils as utils
-from src.mme.chunking import chunk_text
+from . import catalog, embeddings, store, utils
+from .chunking import chunk_text
 
 def make_chunk_id(
     path: str | Path,

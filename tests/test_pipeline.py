@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import src.mme.pipeline as pipeline
+from mme import pipeline
 
 
 class PipelineTests(unittest.TestCase):
@@ -21,19 +21,19 @@ class PipelineTests(unittest.TestCase):
 
         with (
             patch(
-                "pipeline.scan_paths",
+                "mme.pipeline.scan_paths",
                 side_effect=lambda *args, **kwargs: (
                     stage_order.append("scan") or scan_summary
                 ),
             ) as scan_paths,
             patch(
-                "pipeline.hash_all_pending_files",
+                "mme.pipeline.hash_all_pending_files",
                 side_effect=lambda *args, **kwargs: (
                     stage_order.append("hash") or hash_summary
                 ),
             ) as hash_all,
             patch(
-                "pipeline.index_all_pending_files",
+                "mme.pipeline.index_all_pending_files",
                 side_effect=lambda *args, **kwargs: (
                     stage_order.append("index") or index_summary
                 ),
@@ -58,13 +58,13 @@ class PipelineTests(unittest.TestCase):
 
     def test_run_pipeline_uses_configured_roots_by_default(self) -> None:
         with (
-            patch("pipeline.config.INDEX_ROOTS", ["~/Documents"]),
+            patch("mme.pipeline.config.INDEX_ROOTS", ["~/Documents"]),
             patch(
-                "pipeline.scan_paths",
+                "mme.pipeline.scan_paths",
                 return_value={},
             ) as scan_paths,
-            patch("pipeline.hash_all_pending_files", return_value={}),
-            patch("pipeline.index_all_pending_files", return_value={}),
+            patch("mme.pipeline.hash_all_pending_files", return_value={}),
+            patch("mme.pipeline.index_all_pending_files", return_value={}),
         ):
             pipeline.run_pipeline()
 
@@ -75,9 +75,9 @@ class PipelineTests(unittest.TestCase):
 
     def test_run_pipeline_validates_before_running_any_stage(self) -> None:
         with (
-            patch("pipeline.scan_paths") as scan_paths,
-            patch("pipeline.hash_all_pending_files") as hash_all,
-            patch("pipeline.index_all_pending_files") as index_all,
+            patch("mme.pipeline.scan_paths") as scan_paths,
+            patch("mme.pipeline.hash_all_pending_files") as hash_all,
+            patch("mme.pipeline.index_all_pending_files") as index_all,
         ):
             with self.assertRaisesRegex(
                 ValueError,

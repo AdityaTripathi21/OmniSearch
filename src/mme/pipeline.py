@@ -1,9 +1,9 @@
 from pathlib import Path
 
-import src.mme.config as config
-from src.mme.hasher import hash_all_pending_files
-from src.mme.indexer import index_all_pending_files
-from src.mme.scanner import scan_paths
+from . import config
+from .hasher import hash_all_pending_files
+from .indexer import index_all_pending_files
+from .scanner import scan_paths
 
 
 def run_pipeline(

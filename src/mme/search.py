@@ -1,5 +1,4 @@
-import src.mme.embeddings as embeddings
-import src.mme.store as store
+from . import embeddings, store
 
 def search(query: str, n_results: int = 5, media_type: str | None = None) -> list[dict]:
     query_embedding = embeddings.embed_query(query)

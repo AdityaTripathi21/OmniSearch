@@ -1,5 +1,5 @@
-from src.mme.discovery import discover_files
-import src.mme.config as config
+from mme import config
+from mme.discovery import discover_files
 
 files = discover_files(config.INDEX_ROOTS) # type: ignore
 

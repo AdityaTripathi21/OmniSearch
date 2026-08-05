@@ -1,13 +1,12 @@
 from pathlib import Path
 
-import src.mme.catalog as catalog
-import src.mme.config as config
-from src.mme.discovery import discover_files
+from . import catalog, config
+from .discovery import discover_files
 
 def sync_discovered_file(path: str | Path) -> str:
     """Synchronize one discovered file with the catalog."""
     state = catalog.classify_file(path)
-    
+
     if state == "new":
         catalog.add_discovered_file(path)
 
@@ -54,4 +53,3 @@ def scan_configured_roots(recursive: bool = True) -> dict:
         config.INDEX_ROOTS, # type: ignore
         recursive=recursive,
     )
-    

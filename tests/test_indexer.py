@@ -3,8 +3,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import src.mme.indexer as indexer
-from src.mme.chunking import chunk_text
+from mme import indexer
+from mme.chunking import chunk_text
 
 
 class IndexFileTests(unittest.TestCase):
@@ -45,19 +45,19 @@ class IndexFileTests(unittest.TestCase):
         ]
 
         with (
-            patch("indexer.catalog.get_file", return_value=self.row),
+            patch("mme.indexer.catalog.get_file", return_value=self.row),
             patch(
-                "indexer.embeddings.embed_text_batch",
+                "mme.indexer.embeddings.embed_text_batch",
                 return_value=fake_vectors,
             ) as embed_batch,
             patch(
-                "indexer.store.get_file_chunk_ids",
+                "mme.indexer.store.get_file_chunk_ids",
                 return_value=["stale-id", expected_ids[0]],
             ),
-            patch("indexer.store.add_many") as add_many,
-            patch("indexer.store.delete_ids") as delete_ids,
-            patch("indexer.catalog.mark_indexed") as mark_indexed,
-            patch("indexer.utils.now_iso", return_value="test-time"),
+            patch("mme.indexer.store.add_many") as add_many,
+            patch("mme.indexer.store.delete_ids") as delete_ids,
+            patch("mme.indexer.catalog.mark_indexed") as mark_indexed,
+            patch("mme.indexer.utils.now_iso", return_value="test-time"),
         ):
             result = indexer.index_file(self.row)  # type: ignore[arg-type]
 
@@ -105,11 +105,11 @@ class IndexBatchTests(unittest.TestCase):
 
         with (
             patch(
-                "indexer.catalog.get_files_needing_index",
+                "mme.indexer.catalog.get_files_needing_index",
                 return_value=rows,
             ) as get_pending,
             patch(
-                "indexer.index_file",
+                "mme.indexer.index_file",
                 side_effect=[
                     {
                         "status": "indexed",
@@ -138,7 +138,7 @@ class IndexBatchTests(unittest.TestCase):
 
     def test_index_all_pending_files_summarizes_pages(self) -> None:
         with patch(
-            "indexer.index_pending_batch",
+            "mme.indexer.index_pending_batch",
             side_effect=[
                 [
                     {

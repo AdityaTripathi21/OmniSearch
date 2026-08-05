@@ -1,6 +1,6 @@
 from pathlib import Path
 
-PROJECT_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT_DIR / "data"
 
 CHROMA_DIR = DATA_DIR / "chroma"
@@ -70,4 +70,3 @@ ALL_EXTENSIONS = set()
 
 for extensions in SUPPORTED_EXTENSIONS.values():
     ALL_EXTENSIONS.update(extensions)
-

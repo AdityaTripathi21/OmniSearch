@@ -1,8 +1,7 @@
 import sqlite3
 from pathlib import Path
 
-import src.mme.catalog as catalog 
-import src.mme.utils as utils
+from . import catalog, utils
 
 def hash_file(row: sqlite3.Row) -> dict:
     """Hash one pending catalog file and store its content hash."""
