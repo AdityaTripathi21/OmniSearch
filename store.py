@@ -1,5 +1,6 @@
 import chromadb
 import config
+from pathlib import Path
 
 config.CHROMA_DIR.mkdir(parents=True, exist_ok=True)
 client = chromadb.PersistentClient(path=str(config.CHROMA_DIR))
@@ -18,8 +19,7 @@ def add(doc_id: str, embedding: list[float], metadata: dict, document: str = "")
         embeddings=[embedding],
         metadatas=[metadata],
         documents=[document],
-    )
-     
+    )     
      
 def add_many(
     ids: list[str],
@@ -52,7 +52,6 @@ def add_many(
         documents=documents,
     )
 
-
 # search for top k results, where specifices metadata filters like image or pdf     
 def search(query_embedding: list[float], n_results: int = 5, 
            where: dict | None = None) -> dict:   
@@ -84,3 +83,23 @@ def exists(doc_id: str) -> bool:
 # return count of records
 def count() -> int:
     return collection.count()
+
+def get_file_chunk_ids(path: str | Path) -> list[str]:
+    """Return the IDs of all Chroma records belonging to a file."""
+    path = Path(path).expanduser().resolve()
+
+    result = collection.get(
+        where={
+            "file_path": str(path),
+        },
+        include=[],
+    )
+
+    return sorted(result["ids"])
+    
+def delete_ids(ids: list[str]) -> None:
+    """Delete specific Chroma records."""
+    if not ids:
+        return
+
+    collection.delete(ids=ids)
