@@ -211,6 +211,77 @@ def set_content_hash(path: str | Path, content_hash: str) -> None:
     finally:
         connection.close()    
 
+def get_files_needing_index(limit: int = 100, after_path: str = "") -> list[sqlite3.Row]:
+    """Return a page of hashed files whose current version is not indexed."""
+    # note: atp, content hash already been set and it's not null for all files needing index
+    # through hasher.py
+    # but indexed hash is either not set or not equal to content hash
+    
+    if limit < 1:
+        raise ValueError("limit must be at least 1")
+
+    connection = connect()
+
+    try:
+        rows = connection.execute(
+            """
+            SELECT *
+            FROM files
+            WHERE content_hash IS NOT NULL
+              AND (
+                  indexed_hash IS NULL
+                  OR indexed_hash != content_hash
+              )
+              AND file_path > ?
+            ORDER BY file_path
+            LIMIT ?
+            """,
+            (
+                after_path,
+                limit,
+            ),
+        ).fetchall()
+
+        return rows
+    finally:
+        connection.close()
+        
+def mark_indexed(path: str | Path, expected_hash: str) -> None:
+    """Mark one file version as successfully indexed."""
+    
+    path = Path(path).expanduser().resolve()
+
+    if not expected_hash:
+        raise ValueError("expected_hash cannot be empty")
+
+    connection = connect()
+
+    try:
+        with connection:
+            cursor = connection.execute(
+                """
+                UPDATE files
+                SET indexed_hash = ?
+                WHERE file_path = ?
+                  AND content_hash = ?
+                """,
+                (
+                    expected_hash,
+                    str(path),
+                    expected_hash,
+                ),
+            )
+
+            if cursor.rowcount == 0:
+                raise RuntimeError(
+                    "File is missing from the catalog or its "
+                    f"content hash changed during indexing: {path}"
+                )
+    finally:
+        connection.close()
+    
+
+    
 
     
     
