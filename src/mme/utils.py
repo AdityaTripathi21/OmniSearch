@@ -3,7 +3,7 @@ from pathlib import Path
 import mimetypes
 from datetime import datetime, timezone
 
-import config
+import src.mme.config as config
 
 
 # read raw binary contents of file and generate a hash for ids

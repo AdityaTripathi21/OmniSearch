@@ -1,5 +1,5 @@
 import chromadb
-import config
+import src.mme.config as config
 from pathlib import Path
 
 config.CHROMA_DIR.mkdir(parents=True, exist_ok=True)

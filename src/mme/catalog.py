@@ -1,7 +1,7 @@
 import sqlite3
-import config
+import src.mme.config as config
 from pathlib import Path
-import utils
+import src.mme.utils as utils
 
 def connect() -> sqlite3.Connection:
     """Open a connection to the file catalog."""

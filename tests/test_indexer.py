@@ -3,8 +3,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import indexer
-from chunking import chunk_text
+import src.mme.indexer as indexer
+from src.mme.chunking import chunk_text
 
 
 class IndexFileTests(unittest.TestCase):

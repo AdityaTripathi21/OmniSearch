@@ -1,8 +1,8 @@
 from pathlib import Path
 
-import catalog
-import config
-from discovery import discover_files
+import src.mme.catalog as catalog
+import src.mme.config as config
+from src.mme.discovery import discover_files
 
 def sync_discovered_file(path: str | Path) -> str:
     """Synchronize one discovered file with the catalog."""

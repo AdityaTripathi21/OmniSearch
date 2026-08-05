@@ -2,10 +2,10 @@ import os
 from fnmatch import fnmatchcase
 from pathlib import Path
 
-import store
-import embeddings
-import utils
-from discovery import discover_files     
+import src.mme.store as store
+import src.mme.embeddings as embeddings
+import src.mme.utils as utils
+from src.mme.discovery import discover_files     
             
 
 def ingest_file(path: str | Path, source: str = "manual", description: str = "") -> dict:

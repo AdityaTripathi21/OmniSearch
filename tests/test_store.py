@@ -1,7 +1,7 @@
 from uuid import uuid4
 
-import config
-import store
+import src.mme.config as config
+import src.mme.store as store
 
 
 prefix = f"test-{uuid4()}"

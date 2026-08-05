@@ -2,8 +2,8 @@ from fnmatch import fnmatchcase
 import os
 from pathlib import Path
 
-import config
-import utils
+import src.mme.config as config
+import src.mme.utils as utils
 
 
 def discover_files(paths: list[str | Path], 

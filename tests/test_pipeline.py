@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import pipeline
+import src.mme.pipeline as pipeline
 
 
 class PipelineTests(unittest.TestCase):

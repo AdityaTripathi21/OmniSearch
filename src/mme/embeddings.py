@@ -1,8 +1,8 @@
 import os
 from pathlib import Path
 
-import config
-import utils
+import src.mme.config as config
+import src.mme.utils as utils
 
 from dotenv import load_dotenv
 from google import genai
