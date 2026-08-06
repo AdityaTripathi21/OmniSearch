@@ -33,6 +33,11 @@ EXCLUDED_DIR_NAMES = {
     "coverage",
     "target",
     "vendor",
+    ".aws-sam",
+    ".terraform",
+    ".serverless",
+    ".terragrunt-cache",
+    ".gradle",
 }
 
 EXCLUDED_FILE_NAMES = {

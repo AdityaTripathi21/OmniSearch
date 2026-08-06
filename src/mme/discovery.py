@@ -1,8 +1,11 @@
-from fnmatch import fnmatchcase
 import os
 from pathlib import Path
 
-from . import config, utils
+from . import utils
+from .exclusions import (
+    is_excluded_directory_name,
+    is_excluded_path,
+)
 
 
 def discover_files(paths: list[str | Path], 
@@ -40,14 +43,8 @@ def discover_files(paths: list[str | Path],
             missing_paths.append(path)
             
         elif path.is_file():
-            filename = path.name
-            
             if (
-                filename not in config.EXCLUDED_FILE_NAMES
-                and not any(
-                    fnmatchcase(filename, pattern)
-                    for pattern in config.EXCLUDED_FILE_PATTERNS
-                )
+                not is_excluded_path(path)
                 and utils.is_supported(path)
             ):
                 res.add(path)
@@ -61,18 +58,15 @@ def discover_files(paths: list[str | Path],
                 allowed_dirs = []
                 for dirname in dirnames:
                     
-                    if dirname not in config.EXCLUDED_DIR_NAMES:
+                    if not is_excluded_directory_name(dirname):
                         allowed_dirs.append(dirname)
                 dirnames[:] = allowed_dirs
 
                 for filename in filenames:
                     
                     file_path = Path(current_dir) / filename
-                    if (filename not in config.EXCLUDED_FILE_NAMES 
-                        and not any(
-                            fnmatchcase(filename, pattern)
-                            for pattern in config.EXCLUDED_FILE_PATTERNS
-                        )
+                    if (
+                        not is_excluded_path(file_path)
                         and utils.is_supported(file_path)
                     ):
                         res.add(file_path)

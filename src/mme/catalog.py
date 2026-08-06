@@ -279,6 +279,58 @@ def mark_indexed(path: str | Path, expected_hash: str) -> None:
                 )
     finally:
         connection.close()
+
+
+def get_catalog_files(
+    limit: int = 100,
+    after_path: str = "",
+) -> list[sqlite3.Row]:
+    """Return an ordered page of all catalog records."""
+
+    if limit < 1:
+        raise ValueError("limit must be at least 1")
+
+    connection = connect()
+
+    try:
+        rows = connection.execute(
+            """
+            SELECT *
+            FROM files
+            WHERE file_path > ?
+            ORDER BY file_path
+            LIMIT ?
+            """,
+            (
+                after_path,
+                limit,
+            ),
+        ).fetchall()
+
+        return rows
+    finally:
+        connection.close()
+
+
+def delete_file(path: str | Path) -> bool:
+    """Delete one catalog record and report whether it existed."""
+
+    path = Path(path).expanduser().resolve()
+    connection = connect()
+
+    try:
+        with connection:
+            cursor = connection.execute(
+                """
+                DELETE FROM files
+                WHERE file_path = ?
+                """,
+                (str(path),),
+            )
+
+        return cursor.rowcount > 0
+    finally:
+        connection.close()
     
 
     
