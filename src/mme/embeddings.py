@@ -1,11 +1,17 @@
 import os
 from pathlib import Path
+from typing import Any
+
 
 from . import config, utils
+from .errors import RateLimitError
+
 
 from dotenv import load_dotenv
+
 from google import genai
 from google.genai import types
+from google.genai import errors as genai_errors
 
 load_dotenv() 
 
@@ -16,13 +22,30 @@ client = genai.Client(
 )
 
 
+def _embed_content(contents: Any) -> Any:
+    """Request embeddings and translate Gemini rate-limit errors."""
+
+    try:
+        return client.models.embed_content(
+            model=MODEL,
+            contents=contents,
+            config=types.EmbedContentConfig(
+                output_dimensionality=config.EMBEDDING_DIMENSIONS,
+            ),
+        )
+
+    except genai_errors.ClientError as error:
+        if error.code == 429:
+            raise RateLimitError(
+                "Gemini embedding rate limit reached"
+            ) from error
+
+        raise
+
+
 def embed_query(query: str) -> list[float]:
-    res = client.models.embed_content(
-        model=MODEL,
-        contents=f"task: search result | query: {query}",   # contents -> actual input
-        config=types.EmbedContentConfig(
-            output_dimensionality=config.EMBEDDING_DIMENSIONS,
-        ),
+    res = _embed_content(
+        f"task: search result | query: {query}"
     )
     
     return res.embeddings[0].values # type: ignore
@@ -35,17 +58,13 @@ def embed_image(path: str | Path) -> list[float]:
     image_bytes = image_path.read_bytes() # type: ignore
     
     # create embedding
-    res = client.models.embed_content(
-        model=MODEL,
-        contents=[
+    res = _embed_content(
+        [
             types.Part.from_bytes(  # 
                 data=image_bytes,
                 mime_type=mime_type,
             )
-        ],
-        config=types.EmbedContentConfig(
-            output_dimensionality=config.EMBEDDING_DIMENSIONS,
-        ),
+        ]
     )
     
     return res.embeddings[0].values # type: ignore
@@ -54,17 +73,13 @@ def embed_pdf(path: str | Path) -> list[float]:
     pdf_path = Path(path)
     pdf_bytes = pdf_path.read_bytes()
 
-    res = client.models.embed_content(
-        model=MODEL,
-        contents=[
+    res = _embed_content(
+        [
             types.Part.from_bytes(
                 data=pdf_bytes,
                 mime_type="application/pdf",
             )
-        ],
-        config=types.EmbedContentConfig(
-            output_dimensionality=config.EMBEDDING_DIMENSIONS,
-        ),
+        ]
     )
 
     return res.embeddings[0].values  # type: ignore
@@ -74,17 +89,13 @@ def embed_audio(path: str | Path) -> list[float]:
     mime_type = utils.mime_type(audio_path)
     audio_bytes = audio_path.read_bytes()
 
-    res = client.models.embed_content(
-        model=MODEL,
-        contents=[
+    res = _embed_content(
+        [
             types.Part.from_bytes(
                 data=audio_bytes,
                 mime_type=mime_type,
             )
-        ],
-        config=types.EmbedContentConfig(
-            output_dimensionality=config.EMBEDDING_DIMENSIONS,
-        ),
+        ]
     )
 
     return res.embeddings[0].values  # type: ignore
@@ -95,28 +106,20 @@ def embed_video(path: str | Path) -> list[float]:
     mime_type = utils.mime_type(video_path)
     video_bytes = video_path.read_bytes()
 
-    res = client.models.embed_content(
-        model=MODEL,
-        contents=[
+    res = _embed_content(
+        [
             types.Part.from_bytes(
                 data=video_bytes,
                 mime_type=mime_type,
             )
-        ],
-        config=types.EmbedContentConfig(
-            output_dimensionality=config.EMBEDDING_DIMENSIONS,
-        ),
+        ]
     )
 
     return res.embeddings[0].values  # type: ignore
 
 def embed_text(text: str) -> list[float]:
-    res = client.models.embed_content(
-        model=MODEL,
-        contents=f"title: text document | text: {text}",
-        config=types.EmbedContentConfig(
-            output_dimensionality=config.EMBEDDING_DIMENSIONS,
-        ),
+    res = _embed_content(
+        f"title: text document | text: {text}"
     )
 
     return res.embeddings[0].values  # type: ignore
@@ -138,13 +141,7 @@ def embed_text_batch(texts: list[str]) -> list[list[float]]:
         for text in texts
     ]
 
-    res = client.models.embed_content(
-        model=MODEL,
-        contents=contents,
-        config=types.EmbedContentConfig(
-            output_dimensionality=config.EMBEDDING_DIMENSIONS,
-        ),
-    )
+    res = _embed_content(contents)
 
     embeddings = [
         embedding.values
