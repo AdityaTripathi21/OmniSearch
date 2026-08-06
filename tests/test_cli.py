@@ -86,6 +86,63 @@ class CliTests(unittest.TestCase):
             index_batch_size=100,
         )
 
+    def test_prune_excluded_is_a_dry_run_by_default(self) -> None:
+        expected_result = {
+            "scanned": 100,
+            "matched": 5,
+            "applied": False,
+        }
+        stdout = io.StringIO()
+
+        with (
+            patch(
+                "mme.maintenance.prune_excluded_files",
+                return_value=expected_result,
+            ) as prune_excluded_files,
+            redirect_stdout(stdout),
+        ):
+            exit_code = cli.main([
+                "prune-excluded",
+                "--batch-size",
+                "25",
+            ])
+
+        self.assertEqual(exit_code, 0)
+        prune_excluded_files.assert_called_once_with(
+            roots=None,
+            apply=False,
+            batch_size=25,
+        )
+        self.assertEqual(json.loads(stdout.getvalue()), {
+            "ok": True,
+            "command": "prune-excluded",
+            "result": expected_result,
+        })
+
+    def test_prune_excluded_passes_roots_and_apply_setting(self) -> None:
+        stdout = io.StringIO()
+
+        with (
+            patch(
+                "mme.maintenance.prune_excluded_files",
+                return_value={"applied": True},
+            ) as prune_excluded_files,
+            redirect_stdout(stdout),
+        ):
+            exit_code = cli.main([
+                "prune-excluded",
+                "~/Desktop",
+                "~/Documents",
+                "--apply",
+            ])
+
+        self.assertEqual(exit_code, 0)
+        prune_excluded_files.assert_called_once_with(
+            roots=["~/Desktop", "~/Documents"],
+            apply=True,
+            batch_size=100,
+        )
+
     def test_runtime_error_returns_json_on_stderr(self) -> None:
         stdout = io.StringIO()
         stderr = io.StringIO()

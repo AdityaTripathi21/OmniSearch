@@ -60,6 +60,24 @@ def run_sync_command(args: argparse.Namespace) -> dict:
     }
 
 
+def run_prune_excluded_command(args: argparse.Namespace) -> dict:
+    """Preview or remove catalog files matching current exclusions."""
+
+    from .maintenance import prune_excluded_files
+
+    result = prune_excluded_files(
+        roots=args.roots or None,
+        apply=args.apply,
+        batch_size=args.batch_size,
+    )
+
+    return {
+        "ok": True,
+        "command": "prune-excluded",
+        "result": result,
+    }
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the command-line argument parser."""
 
@@ -116,6 +134,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="Hash and index page size (default: 100).",
     )
     sync_parser.set_defaults(handler=run_sync_command)
+
+    prune_parser = subparsers.add_parser(
+        "prune-excluded",
+        help="Preview or remove excluded files from SQLite and Chroma.",
+    )
+    prune_parser.add_argument(
+        "roots",
+        nargs="*",
+        help="Limit cleanup to catalog paths inside these roots.",
+    )
+    prune_parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="Apply deletions; the default is a dry run.",
+    )
+    prune_parser.add_argument(
+        "--batch-size",
+        type=positive_int,
+        default=100,
+        help="Catalog page size (default: 100).",
+    )
+    prune_parser.set_defaults(handler=run_prune_excluded_command)
 
     return parser
 
