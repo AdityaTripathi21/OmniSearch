@@ -43,6 +43,7 @@ EXCLUDED_DIR_NAMES = {
 EXCLUDED_FILE_NAMES = {
     ".env",
     ".DS_Store",
+    "package.json"
 }
 
 EXCLUDED_FILE_PATTERNS = {
@@ -58,6 +59,7 @@ EXCLUDED_FILE_PATTERNS = {
     "*.pfx",
     "*credentials*.csv",
     "*accessKeys*.csv",
+    "package*.json",
 }
 
 EMBEDDING_MODEL = "gemini-embedding-2"

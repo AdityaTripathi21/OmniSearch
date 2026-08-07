@@ -1,0 +1,81 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "mme",
+  "title": "MME",
+  "description": "Semantically search and synchronize local files",
+  "icon": "extension-icon.png",
+  "author": "atriptrip21",
+  "platforms": [
+    "macOS"
+  ],
+  "categories": [
+    "Productivity"
+  ],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "mme",
+      "title": "Search MME",
+      "description": "Semantically search indexed local files",
+      "mode": "view",
+      "arguments": [
+        {
+          "name": "query",
+          "type": "text",
+          "placeholder": "Describe the file you want",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "sync-mme",
+      "title": "Sync MME",
+      "description": "Scan, hash, and index configured local files",
+      "mode": "view"
+    },
+    {
+      "name": "prune-excluded",
+      "title": "Prune Excluded Files",
+      "description": "Preview and remove newly excluded files from MME",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "mmeExecutable",
+      "title": "MME Executable",
+      "description": "Path to the MME command-line executable",
+      "type": "file",
+      "required": true,
+      "default": "/Users/adityatripathi/mme/venv/bin/mme"
+    },
+    {
+      "name": "mmeWorkingDirectory",
+      "title": "MME Working Directory",
+      "description": "Project directory containing MME configuration and data",
+      "type": "directory",
+      "required": true,
+      "default": "/Users/adityatripathi/mme"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.104.24",
+    "@raycast/utils": "^1.17.0"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^2.0.4",
+    "@types/node": "22.19.17",
+    "@types/react": "19.0.10",
+    "eslint": "^9.22.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2"
+  },
+  "scripts": {
+    "build": "ray build",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "prepublishOnly": "echo \"\\n\\nIt seems like you are trying to publish the Raycast extension to npm.\\n\\nIf you did intend to publish it to npm, remove the \\`prepublishOnly\\` script and rerun \\`npm publish\\` again.\\nIf you wanted to publish it to the Raycast Store instead, use \\`npm run publish\\` instead.\\n\\n\" && exit 1",
+    "publish": "npx @raycast/api@latest publish"
+  }
+}

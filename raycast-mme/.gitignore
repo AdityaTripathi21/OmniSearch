@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Raycast-generated files
+raycast-env.d.ts
+.raycast-swift-build/
+.swiftpm/
+compiled_raycast_swift/
+compiled_raycast_rust/
+
+# Build output
+dist/
+
+# Local configuration and logs
+.env
+.env.local
+*.log
+
+# Miscellaneous
+.DS_Store
+Untitled.swift

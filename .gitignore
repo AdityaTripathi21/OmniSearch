@@ -1,9 +1,45 @@
+# Secrets and local configuration
 .env
+.env.*
+!.env.example
+
+# Local application data
+data/
+
+# Python
 __pycache__/
 *.py[cod]
-data/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Virtual environments
 venv/
 .venv/
-*.egg-info/
+env/
+
+# Python packaging
 build/
 dist/
+
+# Node and Raycast build output
+node_modules/
+.raycast-swift-build/
+.swiftpm/
+compiled_raycast_swift/
+compiled_raycast_rust/
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs and accidental scratch files
+*.log
+Untitled.swift
