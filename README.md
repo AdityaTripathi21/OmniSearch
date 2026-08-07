@@ -216,6 +216,37 @@ For example:
 
 See the [Raycast README](raycast-mme/README.md) for extension-specific details.
 
+## MCP Server
+
+MME includes an optional local MCP server so compatible AI hosts can search
+your index and read selected indexed text files. Install the MCP extra and
+refresh the editable package:
+
+~~~bash
+python -m pip install -e ".[mcp]"
+~~~
+
+The server exposes three read-only tools:
+
+- `search_files` — semantic search with optional media filtering
+- `read_indexed_file` — bounded reading of a current, cataloged text file
+- `get_index_status` — catalog and indexing-backlog counts
+
+Start it directly with:
+
+~~~bash
+/absolute/path/to/mme/venv/bin/mme-mcp
+~~~
+
+The command normally prints nothing and waits. That is expected: an MCP host
+launches it as a child process and communicates over standard input/output.
+Configure hosts with the absolute executable path so they do not depend on the
+working directory or shell environment.
+
+The first version intentionally does not expose synchronization or deletion.
+It can search existing Chroma data and read only text files that are current in
+the SQLite catalog and still permitted by MME's exclusion rules.
+
 ## Tests
 
 Run the Python test suite:
@@ -277,8 +308,6 @@ mme/
 
 ## Roadmap
 
-- Read-only MCP tools for semantic search, safe indexed-file reading, and index
-  status
 - Backend file-level search deduplication
 - Improved PDF extraction and failure tracking
 - Optional generated thumbnail caching

@@ -9,6 +9,10 @@ requires-python = ">=3.11"
 
 [project.scripts]
 mme = "mme.cli:main"
+mme-mcp = "mme.mcp_server:main"
+
+[project.optional-dependencies]
+mcp = ["mcp>=2,<3"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
