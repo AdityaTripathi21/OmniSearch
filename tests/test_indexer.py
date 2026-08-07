@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from mme import indexer
 from mme.chunking import chunk_text
+from mme.errors import RateLimitError
 
 
 class IndexFileTests(unittest.TestCase):
@@ -136,38 +137,81 @@ class IndexBatchTests(unittest.TestCase):
             "error": "embedding failed",
         })
 
+    def test_index_pending_batch_stops_on_rate_limit(self) -> None:
+        rows = [
+            {"file_path": "/tmp/first.txt"},
+            {"file_path": "/tmp/second.txt"},
+            {"file_path": "/tmp/third.txt"},
+        ]
+
+        with (
+            patch(
+                "mme.indexer.catalog.get_files_needing_index",
+                return_value=rows,
+            ),
+            patch(
+                "mme.indexer.index_file",
+                side_effect=[
+                    {
+                        "status": "indexed",
+                        "path": "/tmp/first.txt",
+                        "chunks": 1,
+                    },
+                    RateLimitError("quota reached"),
+                ],
+            ) as index_file,
+        ):
+            results = indexer.index_pending_batch(limit=3)
+
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[1], {
+            "status": "rate_limited",
+            "path": "/tmp/second.txt",
+            "error": "quota reached",
+        })
+        self.assertEqual(index_file.call_count, 2)
+
     def test_index_all_pending_files_summarizes_pages(self) -> None:
-        with patch(
-            "mme.indexer.index_pending_batch",
-            side_effect=[
-                [
-                    {
-                        "status": "indexed",
-                        "path": "/tmp/a.txt",
-                        "chunks": 2,
-                    },
-                    {
-                        "status": "error",
-                        "path": "/tmp/b.txt",
-                        "error": "failed",
-                    },
+        with (
+            patch(
+                "mme.indexer.index_pending_batch",
+                side_effect=[
+                    [
+                        {
+                            "status": "indexed",
+                            "path": "/tmp/a.txt",
+                            "chunks": 2,
+                        },
+                        {
+                            "status": "error",
+                            "path": "/tmp/b.txt",
+                            "error": "failed",
+                        },
+                    ],
+                    [
+                        {
+                            "status": "indexed",
+                            "path": "/tmp/c.txt",
+                            "chunks": 3,
+                        },
+                    ],
+                    [],
                 ],
-                [
-                    {
-                        "status": "indexed",
-                        "path": "/tmp/c.txt",
-                        "chunks": 3,
-                    },
-                ],
-                [],
-            ],
-        ) as index_batch:
+            ) as index_batch,
+            patch(
+                "mme.indexer.catalog.count_files_needing_index",
+                return_value=1,
+            ) as count_pending,
+        ):
             summary = indexer.index_all_pending_files(batch_size=2)
 
         self.assertEqual(summary, {
             "selected": 3,
             "indexed": 2,
             "chunks": 5,
+            "remaining": 1,
+            "stopped_reason": None,
+            "stopped_path": None,
             "errors": [
                 {
                     "status": "error",
@@ -187,6 +231,45 @@ class IndexBatchTests(unittest.TestCase):
         self.assertEqual(
             index_batch.call_args_list[2].kwargs,
             {"limit": 2, "after_path": "/tmp/c.txt"},
+        )
+        count_pending.assert_called_once_with()
+
+    def test_index_all_pending_files_stops_after_rate_limit(self) -> None:
+        with (
+            patch(
+                "mme.indexer.index_pending_batch",
+                return_value=[
+                    {
+                        "status": "indexed",
+                        "path": "/tmp/a.txt",
+                        "chunks": 2,
+                    },
+                    {
+                        "status": "rate_limited",
+                        "path": "/tmp/b.txt",
+                        "error": "quota reached",
+                    },
+                ],
+            ) as index_batch,
+            patch(
+                "mme.indexer.catalog.count_files_needing_index",
+                return_value=7,
+            ),
+        ):
+            summary = indexer.index_all_pending_files(batch_size=10)
+
+        self.assertEqual(summary, {
+            "selected": 2,
+            "indexed": 1,
+            "chunks": 2,
+            "remaining": 7,
+            "stopped_reason": "rate_limited",
+            "stopped_path": "/tmp/b.txt",
+            "errors": [],
+        })
+        index_batch.assert_called_once_with(
+            limit=10,
+            after_path="",
         )
 
 

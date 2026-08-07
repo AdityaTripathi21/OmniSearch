@@ -4,6 +4,7 @@ from pathlib import Path
 
 from . import catalog, embeddings, store, utils
 from .chunking import chunk_text
+from .errors import RateLimitError
 
 def make_chunk_id(
     path: str | Path,
@@ -185,6 +186,14 @@ def index_pending_batch(
 
         try:
             results.append(index_file(row))
+            
+        except RateLimitError as error:
+            results.append({
+                "status": "rate_limited",
+                "path": str(path),
+                "error": str(error),
+            })
+            break
 
         except Exception as error:
             results.append({
@@ -207,6 +216,9 @@ def index_all_pending_files(
     indexed = 0
     chunks = 0
     errors: list[dict] = []
+    
+    stopped_reason: str | None = None
+    stopped_path: str | None = None
 
     after_path = ""
 
@@ -230,6 +242,11 @@ def index_all_pending_files(
 
             elif status == "error":
                 errors.append(result)
+            
+            elif status == "rate_limited":
+                stopped_reason = "rate_limited"
+                stopped_path = result["path"]
+                break
 
             else:
                 errors.append({
@@ -241,10 +258,19 @@ def index_all_pending_files(
                 })
 
         after_path = results[-1]["path"]
+        
+        if stopped_reason is not None:
+            break
+    
+    remaining = catalog.count_files_needing_index()
+
 
     return {
         "selected": selected,
         "indexed": indexed,
         "chunks": chunks,
+        "remaining": remaining,
+        "stopped_reason": stopped_reason,
+        "stopped_path": stopped_path,
         "errors": errors,
     }

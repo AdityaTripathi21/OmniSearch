@@ -332,7 +332,28 @@ def delete_file(path: str | Path) -> bool:
     finally:
         connection.close()
     
+def count_files_needing_index() -> int:
+    connection = connect()
+    
+    try:
+        row = connection.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM files
+            WHERE content_hash IS NOT NULL
+              AND (
+                  indexed_hash IS NULL
+                  OR indexed_hash != content_hash
+              )
+            """
+        ).fetchone()
 
+        return row["count"]
+    finally:
+        connection.close()
+    
+    
+                    
     
 
     

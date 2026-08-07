@@ -99,6 +99,16 @@ class CatalogMaintenanceTests(unittest.TestCase):
         self.assertFalse(catalog.delete_file(path))
         self.assertIsNone(catalog.get_file(path))
 
+    def test_count_files_needing_index(self) -> None:
+        paths = [
+            (self.data_directory / "unhashed.txt").resolve(),
+            (self.data_directory / "pending.txt").resolve(),
+            (self.data_directory / "indexed.txt").resolve(),
+        ]
+        self.insert_records(paths)
+
+        self.assertEqual(catalog.count_files_needing_index(), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
