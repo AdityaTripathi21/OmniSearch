@@ -2,6 +2,7 @@ from pathlib import Path
 
 from . import catalog, store
 from .exclusions import is_excluded_path
+from .progress import ProgressCallback, ProgressEvent
 
 
 def _normalize_roots(
@@ -37,6 +38,7 @@ def prune_excluded_files(
     roots: list[str | Path] | None = None,
     apply: bool = False,
     batch_size: int = 100,
+    progress: ProgressCallback | None = None,
 ) -> dict:
     """Find excluded catalog files and optionally remove their index state.
 
@@ -51,6 +53,11 @@ def prune_excluded_files(
 
     normalized_roots = _normalize_roots(roots)
     catalog.initialize()
+    total = (
+        catalog.count_catalog_files()
+        if progress is not None and normalized_roots is None
+        else None
+    )
 
     scanned = 0
     matched = 0
@@ -58,6 +65,14 @@ def prune_excluded_files(
     chroma_records_deleted = 0
     errors: list[dict] = []
     after_path = ""
+
+    if progress is not None:
+        progress(ProgressEvent(
+            stage="prune",
+            completed=0,
+            total=total,
+            status="started",
+        ))
 
     while True:
         rows = catalog.get_catalog_files(
@@ -77,11 +92,27 @@ def prune_excluded_files(
             scanned += 1
 
             if not is_excluded_path(path):
+                if progress is not None:
+                    progress(ProgressEvent(
+                        stage="prune",
+                        completed=scanned,
+                        total=total,
+                        status="checked",
+                        path=str(path),
+                    ))
                 continue
 
             matched += 1
 
             if not apply:
+                if progress is not None:
+                    progress(ProgressEvent(
+                        stage="prune",
+                        completed=scanned,
+                        total=total,
+                        status="matched",
+                        path=str(path),
+                    ))
                 continue
 
             try:
@@ -91,13 +122,40 @@ def prune_excluded_files(
 
                 if catalog.delete_file(path):
                     catalog_rows_deleted += 1
+
+                if progress is not None:
+                    progress(ProgressEvent(
+                        stage="prune",
+                        completed=scanned,
+                        total=total,
+                        status="deleted",
+                        path=str(path),
+                    ))
             except Exception as error:
                 errors.append({
                     "path": str(path),
                     "error": str(error),
                 })
 
+                if progress is not None:
+                    progress(ProgressEvent(
+                        stage="prune",
+                        completed=scanned,
+                        total=total,
+                        status="error",
+                        path=str(path),
+                        message=str(error),
+                    ))
+
         after_path = rows[-1]["file_path"]
+
+    if progress is not None:
+        progress(ProgressEvent(
+            stage="prune",
+            completed=scanned,
+            total=total,
+            status="complete",
+        ))
 
     return {
         "scanned": scanned,

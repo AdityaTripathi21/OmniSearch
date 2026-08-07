@@ -1,7 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 from mme import indexer
 from mme.chunking import chunk_text
@@ -222,15 +222,23 @@ class IndexBatchTests(unittest.TestCase):
         })
         self.assertEqual(
             index_batch.call_args_list[0].kwargs,
-            {"limit": 2, "after_path": ""},
+            {"limit": 2, "after_path": "", "on_result": ANY},
         )
         self.assertEqual(
             index_batch.call_args_list[1].kwargs,
-            {"limit": 2, "after_path": "/tmp/b.txt"},
+            {
+                "limit": 2,
+                "after_path": "/tmp/b.txt",
+                "on_result": ANY,
+            },
         )
         self.assertEqual(
             index_batch.call_args_list[2].kwargs,
-            {"limit": 2, "after_path": "/tmp/c.txt"},
+            {
+                "limit": 2,
+                "after_path": "/tmp/c.txt",
+                "on_result": ANY,
+            },
         )
         count_pending.assert_called_once_with()
 
@@ -270,6 +278,7 @@ class IndexBatchTests(unittest.TestCase):
         index_batch.assert_called_once_with(
             limit=10,
             after_path="",
+            on_result=ANY,
         )
 
 

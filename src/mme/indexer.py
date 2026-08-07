@@ -1,10 +1,12 @@
 import hashlib
 import sqlite3
 from pathlib import Path
+from typing import Callable
 
 from . import catalog, embeddings, store, utils
 from .chunking import chunk_text
 from .errors import RateLimitError
+from .progress import ProgressCallback, ProgressEvent
 
 def make_chunk_id(
     path: str | Path,
@@ -171,6 +173,7 @@ def index_file(row: sqlite3.Row) -> dict:
 def index_pending_batch(
     limit: int = 100,
     after_path: str = "",
+    on_result: Callable[[dict], None] | None = None,
 ) -> list[dict]:
     """Index one page of catalog files that need indexing."""
 
@@ -185,27 +188,37 @@ def index_pending_batch(
         path = Path(row["file_path"])
 
         try:
-            results.append(index_file(row))
-            
+            result = index_file(row)
         except RateLimitError as error:
-            results.append({
+            result = {
                 "status": "rate_limited",
                 "path": str(path),
                 "error": str(error),
-            })
+            }
+            results.append(result)
+
+            if on_result is not None:
+                on_result(result)
+
             break
 
         except Exception as error:
-            results.append({
+            result = {
                 "status": "error",
                 "path": str(path),
                 "error": str(error),
-            })
+            }
+
+        results.append(result)
+
+        if on_result is not None:
+            on_result(result)
 
     return results
 
 def index_all_pending_files(
     batch_size: int = 100,
+    progress: ProgressCallback | None = None,
 ) -> dict:
     """Index every currently pending catalog file once."""
 
@@ -219,13 +232,42 @@ def index_all_pending_files(
     
     stopped_reason: str | None = None
     stopped_path: str | None = None
+    total = (
+        catalog.count_files_needing_index()
+        if progress is not None
+        else 0
+    )
+    completed = 0
 
     after_path = ""
+
+    if progress is not None:
+        progress(ProgressEvent(
+            stage="index",
+            completed=0,
+            total=total,
+            status="started",
+        ))
+
+    def report_result(result: dict) -> None:
+        nonlocal completed
+        completed += 1
+
+        if progress is not None:
+            progress(ProgressEvent(
+                stage="index",
+                completed=completed,
+                total=total,
+                status=result["status"],
+                path=result.get("path", ""),
+                message=result.get("error", ""),
+            ))
 
     while True:
         results = index_pending_batch(
             limit=batch_size,
             after_path=after_path,
+            on_result=report_result,
         )
 
         if not results:
@@ -263,6 +305,14 @@ def index_all_pending_files(
             break
     
     remaining = catalog.count_files_needing_index()
+
+    if progress is not None and stopped_reason is None:
+        progress(ProgressEvent(
+            stage="index",
+            completed=completed,
+            total=total,
+            status="complete",
+        ))
 
 
     return {

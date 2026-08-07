@@ -1,7 +1,9 @@
 import sqlite3
 from pathlib import Path
+from typing import Callable
 
 from . import catalog, utils
+from .progress import ProgressCallback, ProgressEvent
 
 def hash_file(row: sqlite3.Row) -> dict:
     """Hash one pending catalog file and store its content hash."""
@@ -53,7 +55,11 @@ def hash_file(row: sqlite3.Row) -> dict:
         "content_hash": content_hash,
     }
         
-def hash_pending_batch(limit: int = 100, after_path: str = "") -> list[dict]:
+def hash_pending_batch(
+    limit: int = 100,
+    after_path: str = "",
+    on_result: Callable[[dict], None] | None = None,
+) -> list[dict]:
     """Hash a batch of catalog files whose content hash is missing."""
     
     rows = catalog.get_files_needing_hash(limit=limit, after_path=after_path)
@@ -64,18 +70,24 @@ def hash_pending_batch(limit: int = 100, after_path: str = "") -> list[dict]:
 
         try:
             result = hash_file(row)
-            results.append(result)
-            
         except Exception as error:
-            results.append({
+            result = {
                 "status": "error",
                 "path": str(path),
                 "error": str(error),
-            })
+            }
+
+        results.append(result)
+
+        if on_result is not None:
+            on_result(result)
 
     return results
 
-def hash_all_pending_files(batch_size: int = 100) -> dict:
+def hash_all_pending_files(
+    batch_size: int = 100,
+    progress: ProgressCallback | None = None,
+) -> dict:
     """Hash every currently pending catalog file once."""
     
     if batch_size < 1:
@@ -85,13 +97,42 @@ def hash_all_pending_files(batch_size: int = 100) -> dict:
     hashed = 0
     skipped = 0
     errors: list[dict] = []
+    total = (
+        catalog.count_files_needing_hash()
+        if progress is not None
+        else 0
+    )
+    completed = 0
 
     after_path = ""
+
+    if progress is not None:
+        progress(ProgressEvent(
+            stage="hash",
+            completed=0,
+            total=total,
+            status="started",
+        ))
+
+    def report_result(result: dict) -> None:
+        nonlocal completed
+        completed += 1
+
+        if progress is not None:
+            progress(ProgressEvent(
+                stage="hash",
+                completed=completed,
+                total=total,
+                status=result["status"],
+                path=result.get("path", ""),
+                message=result.get("error", result.get("reason", "")),
+            ))
     
     while True:
         results = hash_pending_batch(
             limit=batch_size,
             after_path=after_path,
+            on_result=report_result,
         )
 
         if not results:
@@ -119,6 +160,14 @@ def hash_all_pending_files(batch_size: int = 100) -> dict:
                 })
                             
         after_path = results[-1]["path"]
+
+    if progress is not None:
+        progress(ProgressEvent(
+            stage="hash",
+            completed=completed,
+            total=total,
+            status="complete",
+        ))
 
     return {
         "selected": selected,

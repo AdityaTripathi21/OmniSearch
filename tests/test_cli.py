@@ -58,6 +58,7 @@ class CliTests(unittest.TestCase):
             recursive=True,
             hash_batch_size=25,
             index_batch_size=25,
+            progress=cli.render_progress,
         )
         self.assertTrue(json.loads(stdout.getvalue())["ok"])
 
@@ -84,6 +85,7 @@ class CliTests(unittest.TestCase):
             recursive=False,
             hash_batch_size=100,
             index_batch_size=100,
+            progress=cli.render_progress,
         )
 
     def test_prune_excluded_is_a_dry_run_by_default(self) -> None:
@@ -112,6 +114,7 @@ class CliTests(unittest.TestCase):
             roots=None,
             apply=False,
             batch_size=25,
+            progress=cli.render_progress,
         )
         self.assertEqual(json.loads(stdout.getvalue()), {
             "ok": True,
@@ -141,6 +144,41 @@ class CliTests(unittest.TestCase):
             roots=["~/Desktop", "~/Documents"],
             apply=True,
             batch_size=100,
+            progress=cli.render_progress,
+        )
+
+    def test_quiet_sync_disables_progress_callback(self) -> None:
+        stdout = io.StringIO()
+
+        with (
+            patch(
+                "mme.pipeline.run_pipeline",
+                return_value={},
+            ) as run_pipeline,
+            redirect_stdout(stdout),
+        ):
+            exit_code = cli.main(["sync", "--quiet"])
+
+        self.assertEqual(exit_code, 0)
+        self.assertIsNone(run_pipeline.call_args.kwargs["progress"])
+
+    def test_render_progress_writes_only_to_stderr(self) -> None:
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+
+        with redirect_stdout(stdout), redirect_stderr(stderr):
+            cli.render_progress(cli.ProgressEvent(
+                stage="index",
+                completed=2,
+                total=5,
+                status="indexed",
+                path="/tmp/notes.md",
+            ))
+
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertEqual(
+            stderr.getvalue(),
+            "[index] 2/5 — indexed — notes.md\n",
         )
 
     def test_runtime_error_returns_json_on_stderr(self) -> None:

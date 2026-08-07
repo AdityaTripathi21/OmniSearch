@@ -109,6 +109,17 @@ class CatalogMaintenanceTests(unittest.TestCase):
 
         self.assertEqual(catalog.count_files_needing_index(), 1)
 
+    def test_catalog_counts_support_progress_totals(self) -> None:
+        paths = [
+            (self.data_directory / "unhashed.txt").resolve(),
+            (self.data_directory / "pending.txt").resolve(),
+            (self.data_directory / "indexed.txt").resolve(),
+        ]
+        self.insert_records(paths)
+
+        self.assertEqual(catalog.count_catalog_files(), 3)
+        self.assertEqual(catalog.count_files_needing_hash(), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

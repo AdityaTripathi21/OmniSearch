@@ -18,6 +18,7 @@ class PipelineTests(unittest.TestCase):
         }
 
         stage_order: list[str] = []
+        progress = lambda event: None
 
         with (
             patch(
@@ -44,12 +45,23 @@ class PipelineTests(unittest.TestCase):
                 recursive=False,
                 hash_batch_size=25,
                 index_batch_size=10,
+                progress=progress,
             )
 
         self.assertEqual(stage_order, ["scan", "hash", "index"])
-        scan_paths.assert_called_once_with(paths, recursive=False)
-        hash_all.assert_called_once_with(batch_size=25)
-        index_all.assert_called_once_with(batch_size=10)
+        scan_paths.assert_called_once_with(
+            paths,
+            recursive=False,
+            progress=progress,
+        )
+        hash_all.assert_called_once_with(
+            batch_size=25,
+            progress=progress,
+        )
+        index_all.assert_called_once_with(
+            batch_size=10,
+            progress=progress,
+        )
         self.assertEqual(result, {
             "scan": scan_summary,
             "hash": hash_summary,
@@ -71,6 +83,7 @@ class PipelineTests(unittest.TestCase):
         scan_paths.assert_called_once_with(
             ["~/Documents"],
             recursive=True,
+            progress=None,
         )
 
     def test_run_pipeline_validates_before_running_any_stage(self) -> None:

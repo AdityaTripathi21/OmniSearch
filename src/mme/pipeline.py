@@ -3,6 +3,7 @@ from pathlib import Path
 from . import config
 from .hasher import hash_all_pending_files
 from .indexer import index_all_pending_files
+from .progress import ProgressCallback
 from .scanner import scan_paths
 
 
@@ -11,6 +12,7 @@ def run_pipeline(
     recursive: bool = True,
     hash_batch_size: int = 100,
     index_batch_size: int = 100,
+    progress: ProgressCallback | None = None,
 ) -> dict:
     """Scan, hash, and index files in one pipeline run.
 
@@ -37,12 +39,15 @@ def run_pipeline(
     scan_summary = scan_paths(
         selected_paths, # type: ignore
         recursive=recursive,
+        progress=progress,
     )
     hash_summary = hash_all_pending_files(
         batch_size=hash_batch_size,
+        progress=progress,
     )
     index_summary = index_all_pending_files(
         batch_size=index_batch_size,
+        progress=progress,
     )
 
     return {

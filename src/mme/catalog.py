@@ -333,6 +333,7 @@ def delete_file(path: str | Path) -> bool:
         connection.close()
     
 def count_files_needing_index() -> int:
+    """Return the number of hashed file versions awaiting indexing."""
     connection = connect()
     
     try:
@@ -345,6 +346,41 @@ def count_files_needing_index() -> int:
                   indexed_hash IS NULL
                   OR indexed_hash != content_hash
               )
+            """
+        ).fetchone()
+
+        return row["count"]
+    finally:
+        connection.close()
+
+
+def count_files_needing_hash() -> int:
+    """Return the number of catalog files awaiting a content hash."""
+    connection = connect()
+
+    try:
+        row = connection.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM files
+            WHERE content_hash IS NULL
+            """
+        ).fetchone()
+
+        return row["count"]
+    finally:
+        connection.close()
+
+
+def count_catalog_files() -> int:
+    """Return the total number of records in the file catalog."""
+    connection = connect()
+
+    try:
+        row = connection.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM files
             """
         ).fetchone()
 
